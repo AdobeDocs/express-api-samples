@@ -1,0 +1,22 @@
+{
+  "name": "express-api-oauth-s2s-sample",
+  "version": "1.0.0",
+  "description": "Sample app for the Adobe Express API self-service variation workflow with OAuth Server-to-Server.",
+  "type": "module",
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "vite": "^7.0.6",
+    "vite-plugin-mkcert": "^1.17.8"
+  }
+}

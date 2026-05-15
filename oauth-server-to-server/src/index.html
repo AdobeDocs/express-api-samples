@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Express API – Self-Service Variation (S2S)</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+    }
+
+    body {
+      font: 15px/1.5 system-ui, sans-serif;
+      max-width: 880px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    h1 {
+      margin: 0 0 .25rem;
+    }
+
+    .muted {
+      color: #888;
+    }
+
+    .banner {
+      background: #eef4ff;
+      border: 1px solid #b9d3fb;
+      padding: .65rem .9rem;
+      border-radius: 6px;
+      font-size: 13px;
+      margin: 1rem 0 0;
+    }
+
+    button {
+      font: inherit;
+      padding: .5rem 1rem;
+      border: 1px solid #888;
+      background: #f5f5f5;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button.primary {
+      background: #1473e6;
+      color: #fff;
+      border-color: #1473e6;
+    }
+
+    button:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: .5rem;
+      cursor: pointer;
+      transition: border-color .15s;
+    }
+
+    .card:hover {
+      border-color: #1473e6;
+    }
+
+    .card.selected {
+      border-color: #1473e6;
+      box-shadow: 0 0 0 2px rgba(20, 115, 230, .25);
+    }
+
+    .card img {
+      width: 100%;
+      aspect-ratio: 1/1;
+      object-fit: contain;
+      background: #fafafa;
+      border-radius: 4px;
+    }
+
+    .card .name {
+      font-size: 13px;
+      margin-top: .35rem;
+      word-break: break-word;
+    }
+
+    .row {
+      display: flex;
+      gap: .5rem;
+      align-items: center;
+    }
+
+    .row+.row {
+      margin-top: .5rem;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: #555;
+      margin-bottom: .15rem;
+    }
+
+    input[type=text],
+    input[type=url] {
+      width: 100%;
+      padding: .4rem .5rem;
+      box-sizing: border-box;
+      border: 1px solid #bbb;
+      border-radius: 4px;
+    }
+
+    .field {
+      margin-bottom: .75rem;
+    }
+
+    .field .type {
+      display: inline-block;
+      font-size: 11px;
+      padding: 1px 6px;
+      background: #eee;
+      border-radius: 3px;
+      margin-left: .35rem;
+      vertical-align: middle;
+    }
+
+    pre {
+      background: #111;
+      color: #eee;
+      padding: .75rem;
+      border-radius: 6px;
+      overflow: auto;
+      font-size: 12px;
+    }
+
+    section {
+      margin-top: 2rem;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .success {
+      background: #e9f7ef;
+      border: 1px solid #b6e4c5;
+      padding: 1rem;
+      border-radius: 6px;
+    }
+
+    .error {
+      background: #fdecea;
+      border: 1px solid #f5c2bf;
+      padding: 1rem;
+      border-radius: 6px;
+    }
+
+  </style>
+</head>
+
+<body>
+  <h1>Adobe Express &mdash; Self-Service Variation (S2S)</h1>
+  <p class="muted">Pick one of your company's tagged templates, fill in the tag values, generate a variation
+    server-side with the technical account, and open it in Adobe Express.</p>
+  <div class="banner">
+    Templates shown below are those <strong>shared with your organization's technical account</strong>. The technical
+    account email is on your OAuth Server-to-Server credential overview in the Adobe Developer Console.
+  </div>
+
+  <section>
+    <div class="row">
+      <button id="refresh-btn">Refresh templates</button>
+    </div>
+  </section>
+
+  <section id="templates-section">
+    <h2>1. Pick a template</h2>
+    <div id="templates-grid" class="grid"></div>
+  </section>
+
+  <section id="form-section" class="hidden">
+    <h2>2. Fill in the tag values</h2>
+    <p class="muted" id="form-template-name"></p>
+    <form id="variation-form">
+      <div id="form-fields"></div>
+      <div class="field">
+        <label for="preferred-name">Variation document name (optional)</label>
+        <input type="text" id="preferred-name" placeholder="My new variation" />
+      </div>
+      <button type="submit" class="primary" id="submit-btn">Generate variation</button>
+    </form>
+  </section>
+
+  <section id="result-section" class="hidden">
+    <h2>3. Result</h2>
+    <div id="result-content"></div>
+  </section>
+
+  <script type="module">
+    const $ = (sel) => document.querySelector(sel);
+    let selectedTemplate = null;
+    let embedEditor = null;
+
+    // Loads and initializes the Adobe Express Embed SDK once.
+    // The returned `editor` is reused to open generated variations via editor.edit().
+    async function initEmbedSdk() {
+      if (embedEditor) return embedEditor;
+      const clientId = import.meta.env.VITE_EMBED_SDK_CLIENT_ID;
+      if (!clientId) {
+        console.warn('VITE_EMBED_SDK_CLIENT_ID is not set — Embed SDK button will be disabled.');
+        return null;
+      }
+      await import('https://cc-embed.adobe.com/sdk/v4/CCEverywhere.js');
+      const hostInfo = { clientId, appName: 'Self-Service Variation Sample (S2S)' };
+      const configParams = { loginMode: 'delayed' };
+      const { editor } = await window.CCEverywhere.initialize(hostInfo, configParams);
+      embedEditor = editor;
+      return embedEditor;
+    }
+
+    const embedCallbacks = {
+      onCancel: () => { },
+      onPublish: (intent, publishParams) => {
+        console.log('Embed SDK published', intent, publishParams);
+      },
+      onError: (err) => {
+        console.error('Embed SDK error', err.toString());
+      },
+    };
+    const embedAppConfig = { callbacks: embedCallbacks };
+    const embedExportConfig = [
+      {
+        id: 'download',
+        label: 'Download',
+        action: { target: 'download' },
+        style: { uiType: 'button' },
+      },
+    ];
+
+    async function openInEmbedSdk(documentId, btn) {
+      try {
+        if (btn) { btn.disabled = true; btn.textContent = 'Loading editor…'; }
+        const editor = await initEmbedSdk();
+        if (!editor) {
+          alert('Embed SDK is not configured. Set VITE_EMBED_SDK_CLIENT_ID in .env and restart.');
+          return;
+        }
+        editor.edit({ documentId }, embedAppConfig, embedExportConfig);
+      } catch (err) {
+        console.error(err);
+        alert('Failed to open Embed SDK: ' + err.message);
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Open in the Embed SDK →'; }
+      }
+    }
+
+    async function loadTemplates() {
+      const grid = $('#templates-grid');
+      grid.innerHTML = '<p class="muted">Loading...</p>';
+      let r;
+      try {
+        r = await fetch('/api/templates').then(r => r.json());
+      } catch (err) {
+        grid.innerHTML = `<div class="error">Network error: ${err.message}</div>`;
+        return;
+      }
+      if (r && r.error) {
+        grid.innerHTML = `<div class="error"><strong>${r.error}</strong>${r.detail ? `<pre>${r.detail}</pre>` : ''}</div>`;
+        return;
+      }
+      if (!r.documents || !r.documents.length) {
+        grid.innerHTML = '<p class="muted">No tagged documents found. Share a tagged Express template with the technical account email from your credential, then refresh.</p>';
+        return;
+      }
+      grid.innerHTML = '';
+      for (const doc of r.documents) {
+        const el = document.createElement('div');
+        el.className = 'card';
+        el.dataset.id = doc.id;
+        el.innerHTML = `
+      <img src="${doc.thumbnailUrl}" alt="${doc.name}" />
+      <div class="name">${doc.name}</div>
+    `;
+        el.addEventListener('click', () => selectTemplate(doc, el));
+        grid.appendChild(el);
+      }
+    }
+
+    async function selectTemplate(doc, cardEl) {
+      document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+      cardEl.classList.add('selected');
+      $('#form-template-name').textContent = `${doc.name} — ${doc.id}`;
+      $('#form-fields').innerHTML = '<p class="muted">Loading tags...</p>';
+      $('#form-section').classList.remove('hidden');
+      $('#result-section').classList.add('hidden');
+
+      const detail = await fetch(`/api/templates/${encodeURIComponent(doc.id)}`).then(r => r.json());
+      const tags = new Map();
+      for (const page of detail.documentPages || []) {
+        for (const t of page.taggedElements || []) {
+          if (!tags.has(t.name)) tags.set(t.name, t);
+        }
+      }
+      selectedTemplate = { id: doc.id, name: doc.name, tags: [...tags.values()] };
+
+      if (!selectedTemplate.tags.length) {
+        $('#form-fields').innerHTML = '<p class="error">This document has no tagged elements. Tag it first.</p>';
+        $('#submit-btn').disabled = true;
+        return;
+      }
+
+      $('#submit-btn').disabled = false;
+      $('#form-fields').innerHTML = '';
+      for (const t of selectedTemplate.tags) {
+        const div = document.createElement('div');
+        div.className = 'field';
+        const placeholder = t.type === 'text' ? 'Replacement text' : 'https://… pre-signed URL';
+        const inputType = t.type === 'text' ? 'text' : 'url';
+        div.innerHTML = `
+      <label>${t.name}<span class="type">${t.type}</span></label>
+      <input type="${inputType}" data-tag="${t.name}" placeholder="${placeholder}" required />
+    `;
+        $('#form-fields').appendChild(div);
+      }
+    }
+
+    $('#variation-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!selectedTemplate) return;
+      const tagMappings = {};
+      document.querySelectorAll('#form-fields input[data-tag]').forEach(i => {
+        tagMappings[i.dataset.tag] = i.value;
+      });
+      const preferredName = $('#preferred-name').value.trim();
+      const body = {
+        id: selectedTemplate.id,
+        variationDetails: {
+          tagMappings,
+          ...(preferredName ? { preferredDocumentName: preferredName } : {}),
+        },
+      };
+      $('#result-section').classList.remove('hidden');
+      $('#result-content').innerHTML = '<p class="muted">Submitting...</p>';
+      $('#submit-btn').disabled = true;
+
+      try {
+        const submit = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        }).then(r => r.json());
+
+        if (!submit.jobId) {
+          $('#result-content').innerHTML = `<div class="error">Request failed:<pre>${JSON.stringify(submit, null, 2)}</pre></div>`;
+          $('#submit-btn').disabled = false;
+          return;
+        }
+        $('#result-content').innerHTML = `<p class="muted">Job ${submit.jobId} queued. Polling...</p>`;
+        const final = await pollJob(submit.jobId);
+        renderResult(final);
+      } catch (err) {
+        $('#result-content').innerHTML = `<div class="error">${err.message}</div>`;
+      } finally {
+        $('#submit-btn').disabled = false;
+      }
+    });
+
+    async function pollJob(jobId) {
+      while (true) {
+        await new Promise(r => setTimeout(r, 3000));
+        const r = await fetch(`/api/status/${encodeURIComponent(jobId)}`).then(r => r.json());
+        if (r.status === 'succeeded' || r.status === 'failed' || r.status === 'partially_succeeded') return r;
+      }
+    }
+
+    function renderResult(r) {
+      if (r.status !== 'succeeded') {
+        $('#result-content').innerHTML = `<div class="error">Job ${r.status}.<pre>${JSON.stringify(r, null, 2)}</pre></div>`;
+        return;
+      }
+      const doc = r.document || {};
+      $('#result-content').innerHTML = `
+    <div class="success">
+      <strong>Variation created.</strong> If your shared project is set up correctly, end users who are members of the project will see this document when they open Adobe Express.
+      <p>Document ID: <code>${doc.id}</code></p>
+      ${doc.thumbnailUrl ? `<img src="${doc.thumbnailUrl}" style="max-width:240px;border-radius:6px"/>` : ''}
+      <div><button class="primary" id="embed-open-btn" type="button">Open in the Embed SDK &rarr;</button></div>
+      <p class="muted" style="margin-top:.75rem">The Embed SDK will prompt the end user to sign in when they save or export. If they see a "request access" or 404 screen, the parent project isn't shared with their account — see the README for the Admin Console setup.</p>
+    </div>
+    <details style="margin-top:1rem"><summary>Full response</summary><pre>${JSON.stringify(r, null, 2)}</pre></details>
+  `;
+      const btn = document.getElementById('embed-open-btn');
+      if (btn && doc.id) {
+        btn.addEventListener('click', () => openInEmbedSdk(doc.id, btn));
+      }
+    }
+
+    $('#refresh-btn').addEventListener('click', loadTemplates);
+
+    loadTemplates();
+  </script>
+</body>
+
+</html>
