@@ -2,6 +2,8 @@
 
 A runnable, end-to-end implementation of the **self-service variation workflow** with **OAuth Web App** authentication: each end user signs in with their own Adobe ID, picks one of their tagged Express templates, fills in tag values, and the generated variation is opened back in your page via the Adobe Express Embed SDK.
 
+![OAuth Web App sample](../assets/images/oauth-web-app-hero.png)
+
 Companion to the guide **[Generate and Edit a Variant (OAuth Web App)](https://developer.adobe.com/firefly-services/docs/express-api/guides/how-to/e2e-generate-edit-variant-oauth)** — read the guide for the conceptual walk-through; use this repo to run it locally against a real Developer Console project.
 
 For the company-curated-catalog variant, see the `[oauth-server-to-server/](../oauth-server-to-server)` sample.

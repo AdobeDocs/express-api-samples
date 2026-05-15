@@ -2,6 +2,8 @@
 
 A runnable, end-to-end implementation of the **self-service variation workflow** with **OAuth Server-to-Server** authentication: the organization curates a small catalog of tagged Express templates shared with the technical account, users browse that catalog inside the app with no per-user sign-in, the backend generates a variation server-side (landing it in a shared Storage project), and the variation is opened back in your page via the Adobe Express Embed SDK.
 
+![OAuth Server-to-Server sample](../assets/images/oauth-server-to-server-hero.png)
+
 Companion to the guide **[Generate and Edit a Variant (Server-to-Server)](https://developer.adobe.com/firefly-services/docs/express-api/guides/how-to/e2e-generate-edit-variant-s2s)** — read the guide for the conceptual walk-through; use this repo to run it locally against a real Developer Console project.
 
 For the per-user variant where each user signs in with their own Adobe ID, see the `[oauth-web-app/](../oauth-web-app)` sample.

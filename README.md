@@ -6,6 +6,19 @@ Each sample is a minimal, runnable end-to-end implementation of the **self-servi
 
 ## Samples
 
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <a href="./oauth-web-app"><img src="./assets/images/oauth-web-app-hero.png" alt="OAuth Web App sample" /></a><br/>
+      <a href="./oauth-web-app"><code>oauth-web-app/</code></a>
+    </td>
+    <td width="50%" align="center">
+      <a href="./oauth-server-to-server"><img src="./assets/images/oauth-server-to-server-hero.png" alt="OAuth Server-to-Server sample" /></a><br/>
+      <a href="./oauth-server-to-server"><code>oauth-server-to-server/</code></a>
+    </td>
+  </tr>
+</table>
+
 | Sample                                                | Auth flow                                                                                                                                                              | Companion guide                                                                                                                                             |
 | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [`oauth-web-app/`](./oauth-web-app)                   | OAuth Web App (3-legged, `authorization_code`) — each end user signs in with their own Adobe ID and works on their own tagged templates.                               | [Generate and Edit a Variant (OAuth Web App)](https://developer.adobe.com/firefly-services/docs/express-api/guides/how-to/e2e-generate-edit-variant-oauth)  |
