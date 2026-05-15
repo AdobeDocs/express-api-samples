@@ -4,7 +4,7 @@ A runnable, end-to-end implementation of the **self-service variation workflow**
 
 ![OAuth Server-to-Server sample](../assets/images/oauth-server-to-server-hero.png)
 
-Companion to the guide **[Generate and Edit a Variant (Server-to-Server)](https://developer.adobe.com/firefly-services/docs/express-api/guides/how-to/e2e-generate-edit-variant-s2s)** — read the guide for the conceptual walk-through; use this repo to run it locally against a real Developer Console project.
+Companion to the guide **[Generate and Edit a Variant (Server-to-Server)](https://developer.adobe.com/firefly-services/docs/express-api/guides/how-to/e2e-generate-edit-variant-oauth-s2s)** — read the guide for the conceptual walk-through; use this repo to run it locally against a real Developer Console project.
 
 For the per-user variant where each user signs in with their own Adobe ID, see the `[oauth-web-app/](../oauth-web-app)` sample.
 
@@ -20,7 +20,7 @@ Steps 1–5 of the workflow (token, list templates, inspect tags, generate, poll
 
 Step 6 (the end user opening the variation in the Adobe Express Embed SDK) additionally requires:
 
-- A **Storage project URN** (`SHARED_PROJECT_ID`) for a project shared with the technical account _and_ the end users. Project setup requires an Adobe org admin. See the guide's [Admin Console setup](https://developer.adobe.com/firefly-services/docs/express-api/guides/how-to/e2e-generate-edit-variant-s2s) section.
+- A **Storage project URN** (`SHARED_PROJECT_ID`) for a project shared with the technical account _and_ the end users. Project setup requires an Adobe org admin. See the guide's [Admin Console setup](https://developer.adobe.com/firefly-services/docs/express-api/guides/how-to/e2e-generate-edit-variant-oauth-s2s) section.
 - A separate **OAuth Web App** (or **SPA**) credential in the same Developer Console project, whose `client_id` is used by the Embed SDK (`VITE_EMBED_SDK_CLIENT_ID`). The Embed SDK does **not** use the S2S credential.
 
 ## Prerequisites

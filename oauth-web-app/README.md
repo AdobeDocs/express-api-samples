@@ -4,7 +4,7 @@ A runnable, end-to-end implementation of the **self-service variation workflow**
 
 ![OAuth Web App sample](../assets/images/oauth-web-app-hero.png)
 
-Companion to the guide **[Generate and Edit a Variant (OAuth Web App)](https://developer.adobe.com/firefly-services/docs/express-api/guides/how-to/e2e-generate-edit-variant-oauth)** — read the guide for the conceptual walk-through; use this repo to run it locally against a real Developer Console project.
+Companion to the guide **[Generate and Edit a Variant (OAuth Web App)](https://developer.adobe.com/firefly-services/docs/express-api/guides/how-to/e2e-generate-edit-variant-oauth-web-app)** — read the guide for the conceptual walk-through; use this repo to run it locally against a real Developer Console project.
 
 For the company-curated-catalog variant, see the `[oauth-server-to-server/](../oauth-server-to-server)` sample.
 
